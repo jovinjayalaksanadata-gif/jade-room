@@ -94,7 +94,7 @@ async function scanWorkersAI(env, dataUrl, bytes) {
   let out;
   try { out = await run(); } catch (e) {
     if (!/agree/i.test(String(e && e.message))) throw e;
-    await env.AI.run('@cf/meta/llama-3.2-11b-vision-instruct', { prompt: 'agree' }); out = await run(); // persetujuan lisensi Meta, sekali saja
+    try { await env.AI.run('@cf/meta/llama-3.2-11b-vision-instruct', { prompt: 'agree' }); } catch {} out = await run(); // persetujuan lisensi Meta, sekali saja
   }
   return parseTiles(out?.response ?? out);
 }
