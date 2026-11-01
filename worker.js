@@ -132,7 +132,7 @@ export default {
     };
 
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
-    if (url.pathname === '/' || url.pathname === '/health') return withCors(json(200, { ok: true, service: 'Jade Mahjong room' }));
+    if (url.pathname === '/' || url.pathname === '/health') return withCors(json(200, { ok: true, service: 'Jade Mahjong room', scan: env.GEMINI_API_KEY ? 'gemini' : (env.AI ? 'workers-ai' : 'off'), v: 3 }));
 
     try {
       if (url.pathname === '/api/scan' && req.method === 'POST') return withCors(await handleScan(req, env));

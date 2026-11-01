@@ -2,6 +2,8 @@ name = "jade-room"
 main = "worker.js"
 compatibility_date = "2026-06-01"
 workers_dev = true
+# Jangan hapus variabel yang ditambah lewat dashboard Cloudflare saat deploy
+keep_vars = true
 
 # Alamat server: room.mahjongjogja.com (DNS-nya dibuat otomatis oleh Cloudflare)
 routes = [
