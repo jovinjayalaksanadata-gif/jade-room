@@ -78,7 +78,7 @@ async function scanGemini(env, mime, b64) {
     body: JSON.stringify({ contents: [{ parts: [{ text: SCAN_PROMPT }, { inline_data: { mime_type: mime, data: b64 } }] }],
       generationConfig: { temperature: 0, responseMimeType: 'application/json' } }),
   });
-  if (!r.ok) throw new Error('gemini ' + r.status);
+  if (!r.ok) { let msg = ''; try { msg = (await r.json())?.error?.message || ''; } catch {} throw new Error('gemini ' + r.status + (msg ? ': ' + msg.slice(0, 160) : '')); }
   const j = await r.json();
   return parseTiles(j?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '');
 }
@@ -112,7 +112,7 @@ async function handleScan(req, env) {
   if (env.GEMINI_API_KEY) { try { const t = await scanGemini(env, m[1], m[2]); if (t.length) return json(200, { tiles: t, engine: 'gemini' }); errors.push('gemini: kosong'); } catch (e) { errors.push(String(e.message || e)); } }
   const TEST_MODELS = ['@cf/google/gemma-3-12b-it', '@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/mistralai/mistral-small-3.1-24b-instruct'];
   const model = TEST_MODELS.includes(body.model) ? body.model : undefined;
-  if (env.AI) { try { const t = await scanWorkersAI(env, body.image, bytes, model); if (t.length) return json(200, { tiles: t, engine: 'workers-ai' }); errors.push('workers-ai: kosong'); } catch (e) { errors.push('workers-ai: ' + String(e.message || e)); } }
+  if (env.AI) { try { const t = await scanWorkersAI(env, body.image, bytes, model); if (t.length) return json(200, { tiles: t, engine: 'workers-ai', ...(errors.length ? { note: errors } : {}) }); errors.push('workers-ai: kosong'); } catch (e) { errors.push('workers-ai: ' + String(e.message || e)); } }
   if (!env.GEMINI_API_KEY && !env.AI) return json(503, { error: 'Pembaca foto belum diatur di server.' });
   return json(422, { error: 'Tiles tidak terbaca. Coba foto lagi lebih dekat dan terang.', detail: errors });
 }
