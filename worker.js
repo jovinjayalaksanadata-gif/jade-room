@@ -54,7 +54,9 @@ List EVERY face-up tile, left to right, top row first. Use only these codes:
 - Seasons 春 夏 秋 冬 -> e1 e2 e3 e4
 - Animal tiles: cat -> a1, mouse/rat -> a2, rooster -> a3, centipede -> a4
 - Joker tile -> J
-Count identical tiles carefully; a winning hand usually has 14 tiles (more if it has kongs or flowers).
+Read EACH tile on its own. Do not assume tiles form a sequence: three identical tiles in a row are common.
+For dots and bamboo, count the circles or sticks on that exact tile (5 dots = four in the corners plus one in the middle; 7 bamboo = one stick on top and six below).
+A winning hand usually has 14 tiles (more if it has kongs or flowers).
 Only list tiles you can actually see in THIS photo. Never guess or invent tiles.
 Ignore face-down tiles and anything that is not a mahjong tile.
 If the photo shows no readable mahjong tiles, answer {"tiles":[]}.
