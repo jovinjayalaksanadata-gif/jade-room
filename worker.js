@@ -83,9 +83,9 @@ async function scanGemini(env, mime, b64) {
   return parseTiles(j?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '');
 }
 
-async function scanWorkersAI(env, dataUrl, bytes) {
+async function scanWorkersAI(env, dataUrl, bytes, model) {
   try {
-    const out = await env.AI.run(env.AI_MODEL || '@cf/meta/llama-4-scout-17b-16e-instruct', {
+    const out = await env.AI.run(model || env.AI_MODEL || '@cf/meta/llama-4-scout-17b-16e-instruct', {
       messages: [{ role: 'user', content: [{ type: 'text', text: SCAN_PROMPT }, { type: 'image_url', image_url: { url: dataUrl } }] }],
       max_tokens: 400, temperature: 0,
     });
@@ -110,7 +110,9 @@ async function handleScan(req, env) {
   const bytes = Uint8Array.from(atob(m[2]), ch => ch.charCodeAt(0));
   const errors = [];
   if (env.GEMINI_API_KEY) { try { const t = await scanGemini(env, m[1], m[2]); if (t.length) return json(200, { tiles: t, engine: 'gemini' }); errors.push('gemini: kosong'); } catch (e) { errors.push(String(e.message || e)); } }
-  if (env.AI) { try { const t = await scanWorkersAI(env, body.image, bytes); if (t.length) return json(200, { tiles: t, engine: 'workers-ai' }); errors.push('workers-ai: kosong'); } catch (e) { errors.push('workers-ai: ' + String(e.message || e)); } }
+  const TEST_MODELS = ['@cf/google/gemma-3-12b-it', '@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/mistralai/mistral-small-3.1-24b-instruct'];
+  const model = TEST_MODELS.includes(body.model) ? body.model : undefined;
+  if (env.AI) { try { const t = await scanWorkersAI(env, body.image, bytes, model); if (t.length) return json(200, { tiles: t, engine: 'workers-ai' }); errors.push('workers-ai: kosong'); } catch (e) { errors.push('workers-ai: ' + String(e.message || e)); } }
   if (!env.GEMINI_API_KEY && !env.AI) return json(503, { error: 'Pembaca foto belum diatur di server.' });
   return json(422, { error: 'Tiles tidak terbaca. Coba foto lagi lebih dekat dan terang.', detail: errors });
 }
