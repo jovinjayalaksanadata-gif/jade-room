@@ -8,6 +8,10 @@ routes = [
   { pattern = "room.mahjongjogja.com", custom_domain = true }
 ]
 
+# Pembaca foto tiles (gratis 10.000 neuron/hari). Opsional: secret GEMINI_API_KEY untuk Gemini.
+[ai]
+binding = "AI"
+
 [vars]
 ALLOW_ORIGINS = "https://mahjongjogja.com,https://www.mahjongjogja.com"
 
