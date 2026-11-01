@@ -45,7 +45,7 @@ async function readBody(req) {
 const TILE_CODES = new Set(['1m','2m','3m','4m','5m','6m','7m','8m','9m','1p','2p','3p','4p','5p','6p','7p','8p','9p','1s','2s','3s','4s','5s','6s','7s','8s','9s','E','S','W','N','C','F','P','f1','f2','f3','f4','e1','e2','e3','e4','a1','a2','a3','a4','J']);
 const SCAN_PROMPT = `You are reading a photo of mahjong tiles laid face-up on a table (Hong Kong / Chinese style set).
 List EVERY face-up tile, left to right, top row first. Use only these codes:
-- Characters (wan): a Chinese numeral 一二三四五六七八九 above the character 萬 -> 1m 2m 3m 4m 5m 6m 7m 8m 9m
+- Characters (wan): a black Chinese numeral on top and a red 萬 (or 万) below. Numerals: 一=1, 二=2, 三=3, 四=4, 五 or 伍=5, 六=6, 七=7, 八=8, 九=9 -> 1m 2m 3m 4m 5m 6m 7m 8m 9m. Look carefully: 九 (9) has a hooked stroke, 七 (7) is a cross with a hook, 伍 (5) has a 亻 radical on the left
 - Dots / circles: count the circles -> 1p ... 9p
 - Bamboo / sticks: count the sticks; the 1 of bamboo is usually a bird -> 1s ... 9s
 - Winds: 東 -> E, 南 -> S, 西 -> W, 北 -> N
@@ -71,8 +71,8 @@ function parseTiles(text) {
   return list.map(t => String(t).trim()).map(t => /^[1-9][MPS]$/.test(t) ? t.toLowerCase() : t).filter(t => TILE_CODES.has(t)).slice(0, 22);
 }
 
-async function scanGemini(env, mime, b64) {
-  const model = env.GEMINI_MODEL || 'gemini-flash-lite-latest';
+async function scanGemini(env, mime, b64, pick) {
+  const model = pick || env.GEMINI_MODEL || 'gemini-flash-lite-latest';
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
     body: JSON.stringify({ contents: [{ parts: [{ text: SCAN_PROMPT }, { inline_data: { mime_type: mime, data: b64 } }] }],
@@ -109,7 +109,9 @@ async function handleScan(req, env) {
   if (!m) return json(400, { error: 'Foto tidak terbaca.' });
   const bytes = Uint8Array.from(atob(m[2]), ch => ch.charCodeAt(0));
   const errors = [];
-  if (env.GEMINI_API_KEY) { try { const t = await scanGemini(env, m[1], m[2]); if (t.length) return json(200, { tiles: t, engine: 'gemini' }); errors.push('gemini: kosong'); } catch (e) { errors.push(String(e.message || e)); } }
+  const GEMINI_TEST = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+  if (env.GEMINI_API_KEY) { try { const t = await scanGemini(env, m[1], m[2], GEMINI_TEST.includes(body.gmodel) ? body.gmodel : undefined); if (t.length) return json(200, { tiles: t, engine: 'gemini' }); errors.push('gemini: kosong'); } catch (e) { errors.push(String(e.message || e)); } }
+  if (body.gmodel && errors.length) return json(422, { error: 'uji gemini gagal', detail: errors });
   const TEST_MODELS = ['@cf/google/gemma-3-12b-it', '@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/mistralai/mistral-small-3.1-24b-instruct'];
   const model = TEST_MODELS.includes(body.model) ? body.model : undefined;
   if (env.AI) { try { const t = await scanWorkersAI(env, body.image, bytes, model); if (t.length) return json(200, { tiles: t, engine: 'workers-ai', ...(errors.length ? { note: errors } : {}) }); errors.push('workers-ai: kosong'); } catch (e) { errors.push('workers-ai: ' + String(e.message || e)); } }
