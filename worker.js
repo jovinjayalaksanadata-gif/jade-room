@@ -54,9 +54,11 @@ List EVERY face-up tile, left to right, top row first. Use only these codes:
 - Seasons 春 夏 秋 冬 -> e1 e2 e3 e4
 - Animal tiles: cat -> a1, mouse/rat -> a2, rooster -> a3, centipede -> a4
 - Joker tile -> J
-Count identical tiles carefully; a hand usually has 14 tiles (more if it has kongs or flowers).
+Count identical tiles carefully; a winning hand usually has 14 tiles (more if it has kongs or flowers).
+Only list tiles you can actually see in THIS photo. Never guess or invent tiles.
 Ignore face-down tiles and anything that is not a mahjong tile.
-Answer with JSON only, no other text: {"tiles":["1m","1m","1m"]}`;
+If the photo shows no readable mahjong tiles, answer {"tiles":[]}.
+Answer with JSON only, no other text, in the form {"tiles":[...codes...]}`;
 
 function parseTiles(text) {
   if (!text) return [];
